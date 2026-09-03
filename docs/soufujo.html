@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>デイジー読谷 送付状メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF7EE;
+    --ink:#3A332C;
+    --sub:#8a8070;
+    --gold:#D9A441;
+    --leaf:#8FA37E;
+    --line:#E4DCC8;
+    --panelbg:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#EFEAE0; color:var(--ink);
+    font-family:'Zen Maru Gothic',sans-serif;
+    padding:16px;
+  }
+  h1{font-size:18px; margin:0 0 4px;}
+  .sub{color:var(--sub); font-size:12.5px; margin:0 0 16px;}
+  .layout{display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;}
+  .panel{
+    background:var(--panelbg); border-radius:14px; padding:16px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.06);
+    width:340px; flex:0 0 340px;
+  }
+  .panel h2{font-size:13.5px; margin:0 0 10px; color:var(--ink); border-left:4px solid var(--gold); padding-left:8px;}
+  label{display:block; font-size:11.5px; color:var(--sub); margin:10px 0 3px;}
+  input[type=text], input[type=number], textarea{
+    width:100%; font-family:inherit; font-size:12.5px; padding:6px 8px;
+    border:1px solid var(--line); border-radius:8px; background:#FFFDF9;
+  }
+  textarea{resize:vertical;}
+  input[type=file]{font-size:11.5px; width:100%;}
+  .row2{display:flex; gap:8px;}
+  .row2 > div{flex:1;}
+  button{
+    font-family:inherit; font-size:12.5px; border:none; border-radius:20px;
+    padding:8px 14px; cursor:pointer; background:var(--gold); color:#fff; margin-top:8px;
+  }
+  button.secondary{background:#fff; color:var(--ink); border:1px solid var(--line);}
+  button.small{padding:4px 10px; font-size:11px; margin:2px 4px 2px 0;}
+  .patient-row{display:flex; gap:6px; align-items:center; margin-bottom:6px;}
+  .patient-row input{flex:1;}
+  .hint{font-size:11px; color:var(--sub); line-height:1.5; margin-top:4px;}
+  .status{font-size:11.5px; color:var(--leaf); margin-top:6px; min-height:14px;}
+
+  /* preview */
+  .preview-wrap{flex:1; min-width:320px; display:flex; flex-direction:column; align-items:center;}
+  .zoom-controls{margin-bottom:10px; font-size:12px;}
+  .sheet{
+    width:210mm; min-height:297mm; background:var(--paper);
+    box-shadow:0 4px 20px rgba(0,0,0,0.18);
+    position:relative; overflow:hidden;
+    font-family:'Zen Old Mincho',serif;
+    transform-origin:top center;
+  }
+  #printStack{display:none;}
+  #printStack .sheet{margin:0 auto;}
+  .grid-overlay{
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+      repeating-linear-gradient(to right, rgba(200,60,60,0.18) 0, rgba(200,60,60,0.18) 0.3mm, transparent 0.3mm, transparent 10mm),
+      repeating-linear-gradient(to bottom, rgba(200,60,60,0.18) 0, rgba(200,60,60,0.18) 0.3mm, transparent 0.3mm, transparent 10mm);
+    display:none;
+  }
+  .grid-overlay.on{display:block;}
+
+  #addrBlock{
+    position:absolute; line-height:1.55;
+  }
+  #addrBlock .zip{font-size:12px; letter-spacing:1px; margin-bottom:2mm;}
+  #addrBlock .addr{font-size:12.5px; margin-bottom:3mm;}
+  #addrBlock .org{font-size:15.5px; font-weight:600; margin-bottom:1.5mm;}
+  #addrBlock .person{font-size:16.5px; font-weight:600;}
+
+  .sender-block{
+    position:absolute; top:15mm; right:15mm; width:70mm; text-align:right;
+    font-family:'Zen Maru Gothic',sans-serif; font-size:10.5px; color:var(--ink);
+  }
+  .sender-block img{max-width:32mm; max-height:18mm; display:block; margin-left:auto; margin-bottom:2mm;}
+  .sender-block .daisy{margin-left:auto;}
+  .sender-name{font-size:13px; font-weight:700; color:var(--ink); margin-bottom:1mm;}
+  .sender-line{color:var(--sub); font-size:9.5px;}
+
+  .body-area{
+    position:absolute; left:15mm; right:15mm; top:112mm;
+  }
+  .divider{display:flex; align-items:center; gap:6px; margin-bottom:6mm;}
+  .divider .rule{flex:1; height:1px; background:var(--line);}
+  .subject{
+    font-family:'Zen Maru Gothic',sans-serif; font-weight:700; font-size:13.5px;
+    color:#8a5f22; text-align:center; margin-bottom:6mm; letter-spacing:1px;
+  }
+  .greeting{font-size:11.5px; line-height:2; white-space:pre-wrap; margin-bottom:6mm;}
+  .kishi{text-align:center; font-size:12px; margin-bottom:2mm;}
+  .kishoo{font-size:11.5px; font-weight:600; margin-bottom:3mm;}
+  table.patients{width:100%; border-collapse:collapse; font-family:'Zen Maru Gothic',sans-serif; font-size:11px; margin-bottom:4mm;}
+  table.patients th{background:#F3ECDA; color:var(--ink); padding:4px 8px; border:1px solid var(--line); font-weight:700;}
+  table.patients td{padding:4px 8px; border:1px solid var(--line);}
+  .ijou{text-align:right; font-size:11px;}
+  .footer-mark{position:absolute; bottom:10mm; left:15mm; right:15mm; display:flex; align-items:center; gap:6px; opacity:0.85;}
+  .footer-mark .rule{flex:1; height:1px; background:var(--line);}
+  .footer-tag{font-family:'Zen Maru Gothic',sans-serif; font-size:9px; color:var(--sub); letter-spacing:2px;}
+
+  .letter-item{display:flex; justify-content:space-between; align-items:center; gap:6px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; margin-bottom:4px; font-size:11.5px; cursor:pointer; background:#FFFDF9;}
+  .letter-item.active{border-color:var(--gold); background:#FFF6E5;}
+  .letter-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .panel, .zoom-controls, .grid-overlay, h1, .sub, .back-link{display:none !important;}
+    .preview-wrap{align-items:stretch;}
+    #sheet{display:none !important;}
+    #printStack{display:block !important;}
+    #printStack .sheet{box-shadow:none; transform:none !important;}
+    .print-sheet{page-break-after:always;}
+    .print-sheet:last-child{page-break-after:auto;}
+    @page{size:A4; margin:0;}
+  }
+</style>
+</head>
+<body>
+
+<p class="back-link" style="margin:0 0 10px;"><a href="./index.html" style="font-size:12.5px;color:#8a8070;text-decoration:none;">← 事務マニュアルへ戻る</a></p>
+<h1>🌼 デイジー読谷 送付状メーカー</h1>
+<p class="sub">電子カルテから出力したExcel(送付状)とロゴ画像を読み込んで、窓付き封筒にそのまま入れられる送付状を作ります。</p>
+
+<div class="layout">
+  <div class="panel">
+    <h2>1. データを読み込む</h2>
+    <label>電子カルテのExcelファイル(.xlsx)　※複数選択可</label>
+    <input type="file" id="xlsxInput" accept=".xlsx,.xls" multiple>
+    <label>ロゴ画像(任意・前回保存分があれば自動表示)</label>
+    <input type="file" id="logoInput" accept="image/*">
+    <div class="status" id="loadStatus"></div>
+
+    <div id="letterListWrap" style="margin-top:12px; display:none;">
+      <label>読み込んだ宛先一覧（クリックで選択・編集）</label>
+      <div id="letterList"></div>
+      <button class="small secondary" id="addLetterBtn">＋ 宛先を追加（手動）</button>
+    </div>
+
+    <h2 style="margin-top:18px;">2. 宛先(封筒の窓に入る部分)</h2>
+    <label>郵便番号</label><input type="text" id="f_zip">
+    <label>住所</label><input type="text" id="f_addr">
+    <label>宛先(医療機関・施設名)</label><input type="text" id="f_org">
+    <label>宛先(お名前・敬称)</label><input type="text" id="f_person">
+
+    <h2 style="margin-top:18px;">3. 差出人</h2>
+    <label>ステーション名</label><input type="text" id="f_senderOrg" value="訪問看護ステーション　デイジー読谷">
+    <label>連絡先</label><input type="text" id="f_senderTel">
+    <label>管理者</label><input type="text" id="f_senderManager" value="山内 秀">
+
+    <h2 style="margin-top:18px;">4. 本文</h2>
+    <label>件名</label><input type="text" id="f_subject">
+    <label>あいさつ文</label><textarea id="f_body" rows="6">拝啓　時下ますますご清栄のこととお喜び申し上げます。日頃より格別のご高配を賜り、心より御礼申し上げます。
+このたび、ご利用者様の「訪問看護計画書」を作成いたしましたので、下記のとおり送付させていただきます。ご多用のところ恐れ入りますが、ご査収のほどよろしくお願い申し上げます。
+今後もご利用者様お一人おひとりに寄り添った看護に努めてまいりますので、変わらぬご指導ご鞭撻を賜りますよう、何とぞよろしくお願い申し上げます。</textarea>
+
+    <h2 style="margin-top:18px;">5. ご利用者様一覧</h2>
+    <div id="patientList"></div>
+    <button class="small secondary" id="addPatient">＋ 行を追加</button>
+
+    <h2 style="margin-top:18px;">6. 封筒の窓合わせ調整</h2>
+    <div class="row2">
+      <div><label>宛先ブロック 上余白(mm)</label><input type="number" id="f_top" value="15" step="0.5"></div>
+      <div><label>左余白(mm)</label><input type="number" id="f_left" value="15" step="0.5"></div>
+    </div>
+    <label><input type="checkbox" id="gridToggle" style="width:auto; display:inline-block;"> 位置確認用のmm方眼を表示</label>
+    <div class="hint">初期値は一般的な値です。実際にこの封筒に透かして、上下左右に見切れないか確認し、必要ならここで数値を微調整してください。一度合わせれば次回から自動で保存されます。</div>
+
+    <button id="saveBtn">この設定を保存(次回も使う)</button>
+    <button class="secondary" id="printBtn">印刷 / PDF出力（読込んだ全宛先）</button>
+    <div class="hint">複数の宛先を読み込んでいる場合、印刷は1件＝1ページとして全件連続で出力されます。</div>
+    <div class="status" id="saveStatus"></div>
+  </div>
+
+  <div class="preview-wrap">
+    <div class="zoom-controls">
+      表示倍率
+      <button class="small secondary" id="zoomOut">－</button>
+      <span id="zoomLabel">70%</span>
+      <button class="small secondary" id="zoomIn">＋</button>
+    </div>
+    <div id="sheet" class="sheet">
+      <div class="grid-overlay" id="gridOverlay"></div>
+
+      <div class="sender-block">
+        <img id="logoImg" style="display:none;">
+        <svg id="daisyMark" class="daisy" width="26" height="26" viewBox="0 0 40 40" style="display:none;">
+          <g fill="#fff" stroke="#D9A441" stroke-width="1.2">
+            <ellipse cx="20" cy="9" rx="5" ry="8"/>
+            <ellipse cx="20" cy="31" rx="5" ry="8"/>
+            <ellipse cx="9" cy="20" rx="8" ry="5"/>
+            <ellipse cx="31" cy="20" rx="8" ry="5"/>
+          </g>
+          <circle cx="20" cy="20" r="5.5" fill="#D9A441"/>
+        </svg>
+        <div class="sender-name" id="p_senderOrg"></div>
+        <div class="sender-line" id="p_senderTel"></div>
+        <div class="sender-line" id="p_senderManager"></div>
+      </div>
+
+      <div id="addrBlock">
+        <div class="zip" id="p_zip"></div>
+        <div class="addr" id="p_addr"></div>
+        <div class="org" id="p_org"></div>
+        <div class="person" id="p_person"></div>
+      </div>
+
+      <div class="body-area">
+        <div class="divider"><div class="rule"></div>
+          <svg width="16" height="16" viewBox="0 0 40 40">
+            <g fill="#fff" stroke="#D9A441" stroke-width="1.4">
+              <ellipse cx="20" cy="9" rx="5" ry="8"/><ellipse cx="20" cy="31" rx="5" ry="8"/>
+              <ellipse cx="9" cy="20" rx="8" ry="5"/><ellipse cx="31" cy="20" rx="8" ry="5"/>
+            </g><circle cx="20" cy="20" r="5.5" fill="#D9A441"/>
+          </svg>
+        <div class="rule"></div></div>
+        <div class="subject" id="p_subject"></div>
+        <div class="greeting" id="p_body"></div>
+        <div class="kishi">記</div>
+        <div class="kishoo">【ご利用者様情報】</div>
+        <table class="patients">
+          <thead><tr><th style="width:10%;">No</th><th>ご利用者様名</th><th style="width:30%;">担当者名</th></tr></thead>
+          <tbody id="p_patients"></tbody>
+        </table>
+        <div class="ijou">以上</div>
+      </div>
+
+      <div class="footer-mark">
+        <div class="rule"></div>
+        <div class="footer-tag">DAISY YOMITAN HOME VISIT NURSING STATION</div>
+        <div class="rule"></div>
+      </div>
+    </div>
+    <div id="printStack"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_GREETING = `拝啓　時下ますますご清栄のこととお喜び申し上げます。日頃より格別のご高配を賜り、心より御礼申し上げます。
+このたび、ご利用者様の「訪問看護計画書」を作成いたしましたので、下記のとおり送付させていただきます。ご多用のところ恐れ入りますが、ご査収のほどよろしくお願い申し上げます。
+今後もご利用者様お一人おひとりに寄り添った看護に努めてまいりますので、変わらぬご指導ご鞭撻を賜りますよう、何とぞよろしくお願い申し上げます。`;
+
+function makeBlankLetter(){
+  return { zip:'', addr:'', org:'', person:'', subject:'', body: DEFAULT_GREETING, patients:[{name:'', staff:''}] };
+}
+
+let letters = [ makeBlankLetter() ];
+let currentIndex = 0;
+let logoDataUrl = null;
+
+let zoom = 0.7;
+const sheet = document.getElementById('sheet');
+function applyZoom(){ sheet.style.transform = `scale(${zoom})`; sheet.style.marginBottom = (297*(1-zoom)*-3.78)+'px'; document.getElementById('zoomLabel').textContent = Math.round(zoom*100)+'%'; }
+document.getElementById('zoomIn').onclick = ()=>{zoom=Math.min(1.3,zoom+0.1);applyZoom();};
+document.getElementById('zoomOut').onclick = ()=>{zoom=Math.max(0.3,zoom-0.1);applyZoom();};
+applyZoom();
+
+document.getElementById('gridToggle').onchange = e => document.getElementById('gridOverlay').classList.toggle('on', e.target.checked);
+
+function cellVal(ws, addr){ const c = ws[addr]; if(!c) return ''; return (c.w!==undefined? c.w : c.v) || ''; }
+function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function parseExcelFile(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const letter = makeBlankLetter();
+        letter.zip = cellVal(ws,'A1');
+        letter.addr = cellVal(ws,'A2');
+        letter.org = cellVal(ws,'A3');
+        letter.person = cellVal(ws,'A4');
+        letter.subject = cellVal(ws,'A10');
+        // あいさつ文はテンプレートの温かい文面を既定として維持し、Excel側では上書きしない
+
+        const senderOrg = cellVal(ws,'AG5'); if(senderOrg) document.getElementById('f_senderOrg').value = senderOrg;
+        const senderTel = cellVal(ws,'AG6'); if(senderTel) document.getElementById('f_senderTel').value = senderTel;
+        const senderManager = cellVal(ws,'AG7'); if(senderManager) document.getElementById('f_senderManager').value = senderManager;
+
+        letter.patients = [];
+        for(let r=23; r<200; r++){
+          const name = cellVal(ws,'B'+r);
+          const staff = cellVal(ws,'R'+r);
+          if(!name && !staff) break;
+          letter.patients.push({name, staff});
+        }
+        if(letter.patients.length===0) letter.patients.push({name:'', staff:''});
+        resolve(letter);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = () => reject(new Error('read error'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+document.getElementById('xlsxInput').addEventListener('change', async function(e){
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  document.getElementById('loadStatus').textContent = '読み込み中…';
+  const newLetters = [];
+  let failCount = 0;
+  for(const file of files){
+    try{
+      const letter = await parseExcelFile(file);
+      newLetters.push(letter);
+    }catch(err){
+      failCount++;
+    }
+  }
+  if(newLetters.length === 0){
+    document.getElementById('loadStatus').textContent = '読み込みに失敗しました。ファイル形式をご確認ください。';
+    return;
+  }
+  letters = newLetters;
+  currentIndex = 0;
+  loadLetterIntoForm(letters[currentIndex]);
+  renderLetterList();
+  let msg = `✓ ${letters.length}件の宛先を読み込みました`;
+  if(failCount > 0) msg += `（${failCount}件は読み込めませんでした）`;
+  document.getElementById('loadStatus').textContent = msg;
+});
+
+function syncFormIntoCurrentLetter(){
+  const l = letters[currentIndex];
+  if(!l) return;
+  l.zip = document.getElementById('f_zip').value;
+  l.addr = document.getElementById('f_addr').value;
+  l.org = document.getElementById('f_org').value;
+  l.person = document.getElementById('f_person').value;
+  l.subject = document.getElementById('f_subject').value;
+  l.body = document.getElementById('f_body').value;
+}
+
+function loadLetterIntoForm(l){
+  document.getElementById('f_zip').value = l.zip;
+  document.getElementById('f_addr').value = l.addr;
+  document.getElementById('f_org').value = l.org;
+  document.getElementById('f_person').value = l.person;
+  document.getElementById('f_subject').value = l.subject;
+  document.getElementById('f_body').value = l.body;
+  renderPatients();
+  updatePreview();
+}
+
+function selectLetter(i){
+  syncFormIntoCurrentLetter();
+  currentIndex = i;
+  loadLetterIntoForm(letters[currentIndex]);
+  renderLetterList();
+}
+
+function renderLetterList(){
+  const wrap = document.getElementById('letterListWrap');
+  const listEl = document.getElementById('letterList');
+  const hasContent = letters.some(l => l.org || l.person);
+  wrap.style.display = (letters.length > 1 || hasContent) ? 'block' : 'none';
+  listEl.innerHTML = letters.map((l,i)=>{
+    const label = (l.org || l.person) ? `${l.org||'(医療機関未設定)'}　${l.person||''}` : `宛先${i+1}（未設定）`;
+    return `<div class="letter-item ${i===currentIndex?'active':''}" data-i="${i}">
+      <span class="letter-label">${i+1}. ${escapeHtml(label)}</span>
+      <button type="button" class="small secondary" data-del-letter="${i}">×</button>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('.letter-item').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-del-letter]')) return;
+      selectLetter(Number(el.dataset.i));
+    });
+  });
+  listEl.querySelectorAll('[data-del-letter]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(letters.length <= 1) return;
+      const idx = Number(btn.dataset.delLetter);
+      letters.splice(idx,1);
+      if(currentIndex >= letters.length) currentIndex = letters.length-1;
+      else if(idx < currentIndex) currentIndex--;
+      loadLetterIntoForm(letters[currentIndex]);
+      renderLetterList();
+    });
+  });
+}
+
+document.getElementById('addLetterBtn').onclick = ()=>{
+  syncFormIntoCurrentLetter();
+  letters.push(makeBlankLetter());
+  currentIndex = letters.length-1;
+  loadLetterIntoForm(letters[currentIndex]);
+  renderLetterList();
+};
+
+function renderPatients(){
+  const wrap = document.getElementById('patientList');
+  const patients = letters[currentIndex].patients;
+  wrap.innerHTML = '';
+  patients.forEach((p,i)=>{
+    const row = document.createElement('div'); row.className='patient-row';
+    row.innerHTML = `<input type="text" placeholder="ご利用者様名" value="${p.name.replace(/"/g,'&quot;')}" data-i="${i}" data-f="name">
+                      <input type="text" placeholder="担当者名" value="${p.staff.replace(/"/g,'&quot;')}" data-i="${i}" data-f="staff" style="max-width:90px;">
+                      <button type="button" class="small secondary" data-del="${i}">×</button>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('input').forEach(inp=>{
+    inp.oninput = e => { letters[currentIndex].patients[e.target.dataset.i][e.target.dataset.f] = e.target.value; updatePreview(); };
+  });
+  wrap.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick = e => { letters[currentIndex].patients.splice(e.target.dataset.del,1); renderPatients(); updatePreview(); };
+  });
+}
+document.getElementById('addPatient').onclick = ()=>{ letters[currentIndex].patients.push({name:'',staff:''}); renderPatients(); updatePreview(); };
+renderPatients();
+
+document.getElementById('logoInput').addEventListener('change', function(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { logoDataUrl = ev.target.result; updatePreview(); };
+  reader.readAsDataURL(file);
+});
+
+function updatePreview(){
+  const patients = letters[currentIndex].patients;
+  document.getElementById('p_zip').textContent = '〒' + (document.getElementById('f_zip').value||'').replace('〒','');
+  document.getElementById('p_addr').textContent = document.getElementById('f_addr').value;
+  document.getElementById('p_org').textContent = document.getElementById('f_org').value;
+  document.getElementById('p_person').textContent = document.getElementById('f_person').value;
+  document.getElementById('p_senderOrg').textContent = document.getElementById('f_senderOrg').value;
+  document.getElementById('p_senderTel').textContent = document.getElementById('f_senderTel').value;
+  document.getElementById('p_senderManager').textContent = document.getElementById('f_senderManager').value;
+  document.getElementById('p_subject').textContent = document.getElementById('f_subject').value;
+  document.getElementById('p_body').textContent = document.getElementById('f_body').value;
+
+  const tbody = document.getElementById('p_patients');
+  tbody.innerHTML = patients.map((p,i)=>`<tr><td style="text-align:center;">${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.staff)}</td></tr>`).join('');
+
+  const top = parseFloat(document.getElementById('f_top').value)||15;
+  const left = parseFloat(document.getElementById('f_left').value)||15;
+  document.getElementById('addrBlock').style.top = top+'mm';
+  document.getElementById('addrBlock').style.left = left+'mm';
+  document.getElementById('addrBlock').style.maxWidth = (90)+'mm';
+
+  const logoImg = document.getElementById('logoImg');
+  const daisyMark = document.getElementById('daisyMark');
+  if(logoDataUrl){ logoImg.src = logoDataUrl; logoImg.style.display='block'; daisyMark.style.display='none'; }
+  else { logoImg.style.display='none'; daisyMark.style.display='block'; }
+}
+['f_zip','f_addr','f_org','f_person','f_subject','f_body']
+  .forEach(id => document.getElementById(id).addEventListener('input', ()=>{ syncFormIntoCurrentLetter(); updatePreview(); }));
+['f_senderOrg','f_senderTel','f_senderManager','f_top','f_left']
+  .forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+
+function buildPrintSheetHTML(letter){
+  const senderOrg = document.getElementById('f_senderOrg').value;
+  const senderTel = document.getElementById('f_senderTel').value;
+  const senderManager = document.getElementById('f_senderManager').value;
+  const top = parseFloat(document.getElementById('f_top').value)||15;
+  const left = parseFloat(document.getElementById('f_left').value)||15;
+  const logoHtml = logoDataUrl
+    ? `<img src="${logoDataUrl}" style="max-width:32mm;max-height:18mm;display:block;margin-left:auto;margin-bottom:2mm;">`
+    : `<svg width="26" height="26" viewBox="0 0 40 40" style="margin-left:auto;display:block;">
+         <g fill="#fff" stroke="#D9A441" stroke-width="1.2">
+           <ellipse cx="20" cy="9" rx="5" ry="8"/><ellipse cx="20" cy="31" rx="5" ry="8"/>
+           <ellipse cx="9" cy="20" rx="8" ry="5"/><ellipse cx="31" cy="20" rx="8" ry="5"/>
+         </g><circle cx="20" cy="20" r="5.5" fill="#D9A441"/>
+       </svg>`;
+  const patientsRows = letter.patients.map((p,i)=>`<tr><td style="text-align:center;">${i+1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.staff)}</td></tr>`).join('');
+
+  return `<div class="sheet print-sheet">
+    <div class="sender-block" style="top:15mm; right:15mm;">
+      ${logoHtml}
+      <div class="sender-name">${escapeHtml(senderOrg)}</div>
+      <div class="sender-line">${escapeHtml(senderTel)}</div>
+      <div class="sender-line">${escapeHtml(senderManager)}</div>
+    </div>
+    <div style="position:absolute; top:${top}mm; left:${left}mm; max-width:90mm; line-height:1.55;">
+      <div class="zip">〒${escapeHtml((letter.zip||'').toString().replace('〒',''))}</div>
+      <div class="addr">${escapeHtml(letter.addr)}</div>
+      <div class="org">${escapeHtml(letter.org)}</div>
+      <div class="person">${escapeHtml(letter.person)}</div>
+    </div>
+    <div class="body-area">
+      <div class="divider"><div class="rule"></div>
+        <svg width="16" height="16" viewBox="0 0 40 40">
+          <g fill="#fff" stroke="#D9A441" stroke-width="1.4">
+            <ellipse cx="20" cy="9" rx="5" ry="8"/><ellipse cx="20" cy="31" rx="5" ry="8"/>
+            <ellipse cx="9" cy="20" rx="8" ry="5"/><ellipse cx="31" cy="20" rx="8" ry="5"/>
+          </g><circle cx="20" cy="20" r="5.5" fill="#D9A441"/>
+        </svg>
+      <div class="rule"></div></div>
+      <div class="subject">${escapeHtml(letter.subject)}</div>
+      <div class="greeting">${escapeHtml(letter.body)}</div>
+      <div class="kishi">記</div>
+      <div class="kishoo">【ご利用者様情報】</div>
+      <table class="patients">
+        <thead><tr><th style="width:10%;">No</th><th>ご利用者様名</th><th style="width:30%;">担当者名</th></tr></thead>
+        <tbody>${patientsRows}</tbody>
+      </table>
+      <div class="ijou">以上</div>
+    </div>
+    <div class="footer-mark">
+      <div class="rule"></div>
+      <div class="footer-tag">DAISY YOMITAN HOME VISIT NURSING STATION</div>
+      <div class="rule"></div>
+    </div>
+  </div>`;
+}
+
+document.getElementById('printBtn').onclick = ()=>{
+  syncFormIntoCurrentLetter();
+  const stack = document.getElementById('printStack');
+  stack.innerHTML = letters.map(l => buildPrintSheetHTML(l)).join('');
+  window.print();
+};
+
+function loadSaved(){
+  try{
+    const raw = localStorage.getItem('daisy-soufujo-settings');
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s.logoDataUrl) logoDataUrl = s.logoDataUrl;
+      if(s.senderOrg) document.getElementById('f_senderOrg').value = s.senderOrg;
+      if(s.senderTel) document.getElementById('f_senderTel').value = s.senderTel;
+      if(s.senderManager) document.getElementById('f_senderManager').value = s.senderManager;
+      if(s.top!==undefined) document.getElementById('f_top').value = s.top;
+      if(s.left!==undefined) document.getElementById('f_left').value = s.left;
+      document.getElementById('loadStatus').textContent = '前回保存した設定を読み込みました。';
+    }
+  }catch(e){ /* no saved data yet、またはブラウザ設定でストレージ無効 */ }
+  updatePreview();
+}
+loadSaved();
+renderLetterList();
+
+document.getElementById('saveBtn').onclick = ()=>{
+  const settings = {
+    logoDataUrl,
+    senderOrg: document.getElementById('f_senderOrg').value,
+    senderTel: document.getElementById('f_senderTel').value,
+    senderManager: document.getElementById('f_senderManager').value,
+    top: document.getElementById('f_top').value,
+    left: document.getElementById('f_left').value
+  };
+  try{
+    localStorage.setItem('daisy-soufujo-settings', JSON.stringify(settings));
+    document.getElementById('saveStatus').textContent = '✓ 保存しました。次回もこのブラウザで自動的に読み込まれます。';
+  }catch(e){
+    document.getElementById('saveStatus').textContent = '保存に失敗しました（ブラウザのプライベートモード等ではご利用いただけない場合があります）。';
+  }
+};
+</script>
+</body>
+</html>
