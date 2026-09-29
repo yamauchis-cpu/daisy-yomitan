@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --paper:#FBF7EE;
+    --paper:#FFFFFF;
     --ink:#3A332C;
     --sub:#8a8070;
     --gold:#D9A441;
@@ -169,8 +169,10 @@
     <div class="hint" style="margin-top:0;">選んだあとも、件名・あいさつ文はこの下で自由に書き換えられます。</div>
     <label style="margin-top:12px;">件名</label><input type="text" id="f_subject">
     <label>あいさつ文</label><textarea id="f_body" rows="6">拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。</textarea>
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからもよろしくお願いします。</textarea>
+    <button type="button" class="small secondary" id="seasonalBtn" style="margin-top:6px;">🌺 今月の季節のひとことを追加</button>
+    <div class="hint" style="margin-top:2px;">送る月に合わせた、ちょっとした季節の一文を書き出しの直後に挿入します（もう一度押すと外せます。読み込み済みの宛先すべてに反映されます）。</div>
 
     <h2 style="margin-top:18px;">5. ご利用者様一覧</h2>
     <div id="patientList"></div>
@@ -250,8 +252,8 @@
 
 <script>
 const DEFAULT_GREETING = `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`;
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからもよろしくお願いします。`;
 
 // 送付状を使う3つの場面ごとの「件名」「あいさつ文」プリセット。
 // ボタン1つで、読み込み済みの宛先すべてにまとめて反映する。
@@ -260,8 +262,8 @@ const SCENARIO_PRESETS = {
     label: '提供票(実績)の送付',
     subject: '「サービス提供票（実績）」送付について',
     body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-今月分の「サービス提供票（実績）」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`
+今月分の「サービス提供票（実績）」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからもよろしくお願いします。`
   },
   keikaku: {
     label: '計画書・報告書の送付',
@@ -272,10 +274,28 @@ const SCENARIO_PRESETS = {
     label: '指示書の依頼',
     subject: '「訪問看護指示書」交付のお願い',
     body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、下記のご利用者様について訪問看護を継続させていただくにあたり、「訪問看護指示書」の交付をお願いしたく、ご案内申し上げます。お忙しい中大変恐れ入りますが、ご手配いただけますと幸いです。
-これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`
+このたび、下記のご利用者様について訪問看護を継続させていただくにあたり、「訪問看護指示書」の交付をお願いしたく、ご案内申し上げます。お忙しい中恐れ入りますが、ご手配いただけますと幸いです。
+これからもよろしくお願いします。`
   }
 };
+
+// 月ごとの「季節のひとこと」。書き出し(拝啓の一文)の直後に挿入する任意の一文。
+// 沖縄・読谷の気候や行事にちなんだ、少しユーモアのある内容にしている。
+const SEASONAL_LINES = [
+  '沖縄ではそろそろ寒緋桜（かんひざくら）が見頃を迎える頃ですが、まだ半袖で過ごせる陽気に嬉しい悲鳴をあげております。',
+  '本島各地で桜まつりが賑わう季節、気づけば今年もあっという間に2か月が過ぎようとしております。',
+  '日差しの強さに一足早い夏を感じる毎日、皆さまお変わりございませんでしょうか。',
+  '海開きのニュースが待ち遠しい今日この頃、新年度もどうにか元気に過ごしております。',
+  'そろそろ梅雨入りの便りが届く頃、傘が手放せない季節になってまいりました。',
+  '梅雨明けとともに、海やプールのニュースで賑わう季節となりました。',
+  '本格的な台風シーズンの到来に、テレビの気象情報から目が離せない毎日です。',
+  'エイサーの太鼓の音が聞こえてくると、沖縄の夏本番を感じます。',
+  '台風接近のたびに冷蔵庫が食料でいっぱいになる、そんな季節がやってまいりました。',
+  '本州が秋めく頃、沖縄はまだまだ半袖日和。季節の便りに少し戸惑う毎日です。',
+  '沖縄で一年のうち最も過ごしやすいと言われるこの季節、皆さまお変わりございませんか。',
+  '年の瀬にもかかわらず、まだノースリーブで過ごせる陽気に、時の流れの早さを感じております。'
+];
+function currentSeasonalLine(){ return SEASONAL_LINES[new Date().getMonth()]; }
 
 function makeBlankLetter(){
   return { zip:'', addr:'', org:'', person:'', subject:'', body: DEFAULT_GREETING, patients:[{name:'', staff:''}] };
@@ -440,8 +460,30 @@ document.querySelectorAll('[data-scenario]').forEach(btn=>{
     letters.forEach(l=>{ l.subject = preset.subject; l.body = preset.body; });
     loadLetterIntoForm(letters[currentIndex]);
     renderLetterList();
+    document.getElementById('seasonalBtn').textContent = '🌺 今月の季節のひとことを追加';
     document.getElementById('loadStatus').textContent = `✓「${preset.label}」の件名・あいさつ文を宛先${letters.length}件すべてに反映しました`;
   });
+});
+
+document.getElementById('seasonalBtn').addEventListener('click', ()=>{
+  syncFormIntoCurrentLetter();
+  const line = currentSeasonalLine();
+  const hasSeasonal = letters[currentIndex].body.split('\n').some(ln => ln.trim() === line);
+  letters.forEach(l=>{
+    // まず、これまでに挿入されていた季節のひとこと（月が変わって古いものが残っている場合を含む）を取り除く
+    const lines = l.body.split('\n').filter(ln => !SEASONAL_LINES.includes(ln.trim()));
+    if(!hasSeasonal){
+      // 書き出し(1行目)の直後に挿入する
+      lines.splice(1, 0, line);
+    }
+    l.body = lines.join('\n');
+  });
+  loadLetterIntoForm(letters[currentIndex]);
+  renderLetterList();
+  document.getElementById('seasonalBtn').textContent = hasSeasonal ? '🌺 今月の季節のひとことを追加' : '🌺 季節のひとことを外す';
+  document.getElementById('loadStatus').textContent = hasSeasonal
+    ? '季節のひとことを外しました'
+    : `✓ 今月(${new Date().getMonth()+1}月)の季節のひとことを宛先${letters.length}件すべてに追加しました`;
 });
 
 document.getElementById('addLetterBtn').onclick = ()=>{
