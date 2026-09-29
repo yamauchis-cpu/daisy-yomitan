@@ -159,10 +159,17 @@
     <label>管理者</label><input type="text" id="f_senderManager" value="山内 秀">
 
     <h2 style="margin-top:18px;">4. 本文</h2>
-    <label>件名</label><input type="text" id="f_subject">
-    <label>あいさつ文</label><textarea id="f_body" rows="6">拝啓　時下ますますご清栄のこととお喜び申し上げます。日頃より格別のご高配を賜り、心より御礼申し上げます。
-このたび、ご利用者様の「訪問看護計画書」を作成いたしましたので、下記のとおり送付させていただきます。ご多用のところ恐れ入りますが、ご査収のほどよろしくお願い申し上げます。
-今後もご利用者様お一人おひとりに寄り添った看護に努めてまいりますので、変わらぬご指導ご鞭撻を賜りますよう、何とぞよろしくお願い申し上げます。</textarea>
+    <label>書類の種類（選ぶと件名・あいさつ文が読み込み済みの宛先すべてに反映されます）</label>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+      <button type="button" class="small secondary" data-scenario="teikyohyo">①提供票(実績)の送付</button>
+      <button type="button" class="small secondary" data-scenario="keikaku">②計画書・報告書の送付</button>
+      <button type="button" class="small secondary" data-scenario="shijisho">③指示書の依頼</button>
+    </div>
+    <div class="hint" style="margin-top:0;">選んだあとも、件名・あいさつ文はこの下で自由に書き換えられます。</div>
+    <label style="margin-top:12px;">件名</label><input type="text" id="f_subject">
+    <label>あいさつ文</label><textarea id="f_body" rows="6">拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。</textarea>
 
     <h2 style="margin-top:18px;">5. ご利用者様一覧</h2>
     <div id="patientList"></div>
@@ -246,9 +253,33 @@
 </div>
 
 <script>
-const DEFAULT_GREETING = `拝啓　時下ますますご清栄のこととお喜び申し上げます。日頃より格別のご高配を賜り、心より御礼申し上げます。
-このたび、ご利用者様の「訪問看護計画書」を作成いたしましたので、下記のとおり送付させていただきます。ご多用のところ恐れ入りますが、ご査収のほどよろしくお願い申し上げます。
-今後もご利用者様お一人おひとりに寄り添った看護に努めてまいりますので、変わらぬご指導ご鞭撻を賜りますよう、何とぞよろしくお願い申し上げます。`;
+const DEFAULT_GREETING = `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`;
+
+// 送付状を使う3つの場面ごとの「件名」「あいさつ文」プリセット。
+// ボタン1つで、読み込み済みの宛先すべてにまとめて反映する。
+const SCENARIO_PRESETS = {
+  teikyohyo: {
+    label: '提供票(実績)の送付',
+    subject: '「サービス提供票（実績）」送付について',
+    body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
+今月分の「サービス提供票（実績）」がまとまりましたので、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
+これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`
+  },
+  keikaku: {
+    label: '計画書・報告書の送付',
+    subject: '「訪問看護計画書・報告書」送付について',
+    body: DEFAULT_GREETING
+  },
+  shijisho: {
+    label: '指示書の依頼',
+    subject: '「訪問看護指示書」交付のお願い',
+    body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
+このたび、下記のご利用者様について訪問看護を継続させていただくにあたり、「訪問看護指示書」の交付をお願いしたく、ご案内申し上げます。お忙しい中大変恐れ入りますが、ご手配いただけますと幸いです。
+これからも、ご利用者様おひとりおひとりに寄り添いながら、皆様と力を合わせて支えてまいりますので、今後ともどうぞよろしくお願いいたします。`
+  }
+};
 
 function makeBlankLetter(){
   return { zip:'', addr:'', org:'', person:'', subject:'', body: DEFAULT_GREETING, patients:[{name:'', staff:''}] };
@@ -276,28 +307,39 @@ function parseExcelFile(file){
     reader.onload = function(ev){
       try{
         const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const letter = makeBlankLetter();
-        letter.zip = cellVal(ws,'A1');
-        letter.addr = cellVal(ws,'A2');
-        letter.org = cellVal(ws,'A3');
-        letter.person = cellVal(ws,'A4');
-        letter.subject = cellVal(ws,'A10');
-        // あいさつ文はテンプレートの温かい文面を既定として維持し、Excel側では上書きしない
+        // 電子カルテ出力のExcelは、宛先(送付先)ごとにシートが分かれていることがあるため、
+        // 全シートを読み込んで、それぞれを1件の送付状として扱う。
+        const sheetLetters = [];
+        wb.SheetNames.forEach(sheetName=>{
+          const ws = wb.Sheets[sheetName];
+          const letter = makeBlankLetter();
+          letter.zip = cellVal(ws,'A1');
+          letter.addr = cellVal(ws,'A2');
+          letter.org = cellVal(ws,'A3');
+          letter.person = cellVal(ws,'A4');
+          letter.subject = cellVal(ws,'A10');
+          // あいさつ文はテンプレートの温かい文面を既定として維持し、Excel側では上書きしない
 
-        const senderOrg = cellVal(ws,'AG5'); if(senderOrg) document.getElementById('f_senderOrg').value = senderOrg;
-        const senderTel = cellVal(ws,'AG6'); if(senderTel) document.getElementById('f_senderTel').value = senderTel;
-        const senderManager = cellVal(ws,'AG7'); if(senderManager) document.getElementById('f_senderManager').value = senderManager;
+          const senderOrg = cellVal(ws,'AG5'); if(senderOrg) document.getElementById('f_senderOrg').value = senderOrg;
+          const senderTel = cellVal(ws,'AG6'); if(senderTel) document.getElementById('f_senderTel').value = senderTel;
+          const senderManager = cellVal(ws,'AG7'); if(senderManager) document.getElementById('f_senderManager').value = senderManager;
 
-        letter.patients = [];
-        for(let r=23; r<200; r++){
-          const name = cellVal(ws,'B'+r);
-          const staff = cellVal(ws,'R'+r);
-          if(!name && !staff) break;
-          letter.patients.push({name, staff});
-        }
-        if(letter.patients.length===0) letter.patients.push({name:'', staff:''});
-        resolve(letter);
+          letter.patients = [];
+          for(let r=23; r<200; r++){
+            const name = cellVal(ws,'B'+r);
+            const staff = cellVal(ws,'R'+r);
+            if(!name && !staff) break;
+            letter.patients.push({name, staff});
+          }
+          if(letter.patients.length===0) letter.patients.push({name:'', staff:''});
+
+          // 宛先情報も利用者情報も全く無い空シートは読み込み対象から除外する
+          const hasContent = letter.zip || letter.addr || letter.org || letter.person
+            || letter.patients.some(p => p.name || p.staff);
+          if(hasContent) sheetLetters.push(letter);
+        });
+        if(sheetLetters.length===0) sheetLetters.push(makeBlankLetter());
+        resolve(sheetLetters);
       }catch(err){ reject(err); }
     };
     reader.onerror = () => reject(new Error('read error'));
@@ -313,8 +355,8 @@ document.getElementById('xlsxInput').addEventListener('change', async function(e
   let failCount = 0;
   for(const file of files){
     try{
-      const letter = await parseExcelFile(file);
-      newLetters.push(letter);
+      const lettersFromFile = await parseExcelFile(file);
+      newLetters.push(...lettersFromFile);
     }catch(err){
       failCount++;
     }
@@ -328,7 +370,7 @@ document.getElementById('xlsxInput').addEventListener('change', async function(e
   loadLetterIntoForm(letters[currentIndex]);
   renderLetterList();
   let msg = `✓ ${letters.length}件の宛先を読み込みました`;
-  if(failCount > 0) msg += `（${failCount}件は読み込めませんでした）`;
+  if(failCount > 0) msg += `（${failCount}件のファイルは読み込めませんでした）`;
   document.getElementById('loadStatus').textContent = msg;
 });
 
@@ -392,6 +434,19 @@ function renderLetterList(){
     });
   });
 }
+
+document.querySelectorAll('[data-scenario]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const preset = SCENARIO_PRESETS[btn.dataset.scenario];
+    if(!preset) return;
+    syncFormIntoCurrentLetter();
+    // 読み込み済みの宛先すべてに、件名とあいさつ文をまとめて反映する
+    letters.forEach(l=>{ l.subject = preset.subject; l.body = preset.body; });
+    loadLetterIntoForm(letters[currentIndex]);
+    renderLetterList();
+    document.getElementById('loadStatus').textContent = `✓「${preset.label}」の件名・あいさつ文を宛先${letters.length}件すべてに反映しました`;
+  });
+});
 
 document.getElementById('addLetterBtn').onclick = ()=>{
   syncFormIntoCurrentLetter();
