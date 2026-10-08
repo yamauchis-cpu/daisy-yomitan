@@ -273,7 +273,7 @@
     border-radius:8px;background:#fff;color:var(--ink);max-width:100%;
   }
   .tpl-header2{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
-  .tpl-hospital-line{font-size:14px;flex:1;text-align:center;}
+  .tpl-hospital-line{font-size:14px;flex:1;}
   .tpl-issuedate{font-size:13px;}
   .tpl-mini{
     border:none;border-bottom:1px solid var(--line);background:transparent;
@@ -741,7 +741,7 @@
         <div id="template-sheet">
           <div class="tpl-header2">
             <div class="tpl-hospital-line">
-              <input type="text" id="f_hospital" placeholder="医療機関名（例：○○病院／○○クリニック／○○診療所）" class="tpl-input-inline" style="width:320px;">
+              <input type="text" id="f_hospital" placeholder="医療機関名（例：○○病院／○○クリニック／○○診療所）" class="tpl-input-inline" style="width:320px;text-align:center;">
             </div>
             <div class="tpl-issuedate">
               依頼日：<input type="text" id="f_issue_y" class="tpl-mini" style="width:44px;">年
@@ -749,8 +749,8 @@
               <input type="text" id="f_issue_d" class="tpl-mini" style="width:30px;">日
             </div>
           </div>
-          <div class="tpl-field-line" style="text-align:center;">診療科（該当する場合のみ）：<input type="text" id="f_dept" class="tpl-input-inline" style="width:200px;"></div>
-          <div class="tpl-field-line" style="text-align:center;">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;">　先生</div>
+          <div class="tpl-field-line">診療科（該当する場合のみ）：<input type="text" id="f_dept" class="tpl-input-inline" style="width:200px;text-align:center;"></div>
+          <div class="tpl-field-line">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;text-align:center;">　先生</div>
 
           <div class="tpl-title2">
             訪問看護指示書依頼書　（
@@ -763,9 +763,9 @@
 
           <div class="tpl-ki">記</div>
 
-          <div class="tpl-item" style="text-align:center;">
-            <span class="tpl-item-num">1.</span> 利用者氏名：<input type="text" id="f_name" class="tpl-input-inline" style="width:200px;">
-            　　ふりがな：<input type="text" id="f_kana" class="tpl-input-inline" style="width:180px;">
+          <div class="tpl-item">
+            <span class="tpl-item-num">1.</span> 利用者氏名：<input type="text" id="f_name" class="tpl-input-inline" style="width:200px;text-align:center;">
+            　　ふりがな：<input type="text" id="f_kana" class="tpl-input-inline" style="width:180px;text-align:center;">
           </div>
 
           <div class="tpl-item">
