@@ -273,7 +273,7 @@
     border-radius:8px;background:#fff;color:var(--ink);max-width:100%;
   }
   .tpl-header2{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
-  .tpl-hospital-line{font-size:14px;}
+  .tpl-hospital-line{font-size:14px;flex:1;text-align:center;}
   .tpl-issuedate{font-size:13px;}
   .tpl-mini{
     border:none;border-bottom:1px solid var(--line);background:transparent;
@@ -696,7 +696,7 @@
       <div class="card" style="padding:0;overflow:hidden;">
         <dl class="info-grid" style="margin:0;">
           <dt>事業所名</dt><dd>訪問看護ステーション デイジー読谷（運営：株式会社Daisy）</dd>
-          <dt>所在地</dt><dd>〒904-0314　沖縄県中頭郡読谷村字古堅12-1　ドミールCoCo 1F</dd>
+          <dt>所在地</dt><dd>〒904-0314　沖縄県中頭郡読谷村字古堅12-1　ドミールCOCO 1F</dd>
           <dt>電話番号</dt><dd>098-979-5617</dd>
           <dt>FAX番号</dt><dd>098-993-7666</dd>
           <dt>メール</dt><dd>info@daisyflower.one</dd>
@@ -749,8 +749,8 @@
               <input type="text" id="f_issue_d" class="tpl-mini" style="width:30px;">日
             </div>
           </div>
-          <div class="tpl-field-line">診療科（該当する場合のみ）：<input type="text" id="f_dept" class="tpl-input-inline" style="width:200px;" placeholder="任意"></div>
-          <div class="tpl-field-line">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;">　先生</div>
+          <div class="tpl-field-line" style="text-align:center;">診療科（該当する場合のみ）：<input type="text" id="f_dept" class="tpl-input-inline" style="width:200px;"></div>
+          <div class="tpl-field-line" style="text-align:center;">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;">　先生</div>
 
           <div class="tpl-title2">
             訪問看護指示書依頼書　（
@@ -763,7 +763,7 @@
 
           <div class="tpl-ki">記</div>
 
-          <div class="tpl-item">
+          <div class="tpl-item" style="text-align:center;">
             <span class="tpl-item-num">1.</span> 利用者氏名：<input type="text" id="f_name" class="tpl-input-inline" style="width:200px;">
             　　ふりがな：<input type="text" id="f_kana" class="tpl-input-inline" style="width:180px;">
           </div>
@@ -823,9 +823,9 @@
             <span class="tpl-item-num">6.</span> 連絡（郵送）先・担当者
             <table class="formtbl" style="margin-top:8px;">
               <tr><th>郵便番号</th><td colspan="3"><input type="text" id="f_zip" value="904-0314" style="width:160px;"></td></tr>
-              <tr><th>住所</th><td colspan="3"><input type="text" id="f_addr" value="沖縄県中頭郡読谷村字古堅12-1　ドミールCoCo 1F"></td></tr>
+              <tr><th>住所</th><td colspan="3"><input type="text" id="f_addr" value="沖縄県中頭郡読谷村字古堅12-1　ドミールCOCO 1F"></td></tr>
               <tr><th>電話</th><td><input type="text" id="f_tel" value="098-979-5617"></td><th>FAX</th><td><input type="text" id="f_fax" value="098-993-7666"></td></tr>
-              <tr><th>担当者名</th><td colspan="3"><input type="text" id="f_tanto"></td></tr>
+              <tr><th>担当者名</th><td colspan="3"><input type="text" id="f_tanto" value="管理者　山内 秀"></td></tr>
             </table>
           </div>
 
@@ -834,8 +834,8 @@
             <div class="tpl-radio-row" style="margin-top:6px;">
               <label><input type="radio" name="envelope">同封しています（切手貼付済）</label>
               <label><input type="radio" name="envelope">同封しておりません</label>
+              <label><input type="radio" name="envelope">該当なし</label>
             </div>
-            <div class="tpl-example">※返信用封筒が必要か医療機関へご確認ください。原則、指示書発行元医療機関のご負担で郵送いただけます。</div>
           </div>
 
         </div>
@@ -850,6 +850,7 @@
       <p class="block-lead">
         指示書の期限管理・区分支給限度基準額の上限管理・サービス提供票とケアプランの突合を行う、事業所専用のExcel台帳です。
         iBowと重複しないよう、iBowで追い切れない領域に絞っています。
+        2026年10月からは、医療保険利用者の「心身の状態」記載状況を自動でチェックするタブ（シート④）も追加されています。
       </p>
 
       <div class="tpl-wrap" style="padding:26px 28px;margin-bottom:20px;">
@@ -858,7 +859,7 @@
             <svg class="daisy" width="34" height="34" style="color:var(--sage)"><use href="#daisy-icon" xlink:href="#daisy-icon"/></svg>
             <div>
               <div style="font-weight:800;font-size:15px;">指示書_提供表_突合管理表</div>
-              <div style="font-size:12.5px;color:var(--ink-soft);">Googleドライブ（スプレッドシート）／全3シート＋使い方シート・数式自動計算</div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">Googleドライブ（スプレッドシート）／全4シート＋使い方シート・数式自動計算</div>
             </div>
           </div>
           <a class="btn-print" href="https://docs.google.com/spreadsheets/d/1SkmhkmOfbI8yDDaeIf0fZcOswX3hjmmQt8nhLwGkbCI/edit"
@@ -889,6 +890,11 @@
           <span class="tag">シート③</span>
           <h4>提供表・ケアプラン突合</h4>
           <p>ケアプランへの位置付け・提供票受領・実績件数の差異を月次でチェック。</p>
+        </div>
+        <div class="timing-card new">
+          <span class="tag">シート④</span>
+          <h4>心身の状態チェック</h4>
+          <p>医療保険（別表7を含む）利用中の利用者を対象に、毎月の「心身の状態」記載状況を自動管理。未記載は期限に応じて自動で警告・通知。</p>
         </div>
       </div>
 
@@ -927,6 +933,32 @@
             <tr><td class="small">対応状況／確認者／確認日</td><td>手入力（プルダウン・黄色セル）</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <h4 style="font-size:14.5px;margin-bottom:10px;">シート④　心身の状態チェック　しくみ</h4>
+        <table class="tbl">
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td class="small">対象者</td><td>利用者マスタの保険種別が「医療保険」または「医療保険（別表7）」で、利用中の人のみ。毎月自動で行が作成されます。iBowの取り込みで新しく医療保険の人が増えれば、その人も自動で対象になります。中断・終了の人には、翌月から行が作られません。</td></tr>
+            <tr><td class="small">日々の作業</td><td>記載したら「記載済」に✓を入れるだけ（記載日は自動で入ります）。その月に訪問がない人は「対象外」に✓を入れます。</td></tr>
+            <tr><td class="small">未対応一覧への反映</td><td>「未対応一覧」に「心身の状態 未記載」の件数と対象者名が表示されます。</td></tr>
+            <tr><td class="small">設定変更</td><td>通知を始める日（初期値：25日）と期限（初期値：翌月2日）は、「設定」シートのB15・B16で変更できます。</td></tr>
+          </tbody>
+        </table>
+        <table class="tbl" style="margin-top:12px;">
+          <thead><tr><th>時期</th><th>状況</th><th>通知</th></tr></thead>
+          <tbody>
+            <tr><td class="small">当月24日まで</td><td>記載待ち</td><td>なし</td></tr>
+            <tr><td class="small">当月25日〜翌月2日</td><td>要記載（オレンジ表示）</td><td>毎朝通知</td></tr>
+            <tr><td class="small">翌月3日以降</td><td>期限超過（赤表示）</td><td>件名に【心身の状態 期限超過】</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note" style="margin-bottom:16px;">
+        <svg class="daisy" style="color:var(--warn-line)"><use href="#daisy-icon" xlink:href="#daisy-icon"/></svg>
+        <div>（反映時の参考）Apps Scriptのコード（事務チェック_v3.gs）を入れ替えて保存し、「setup」を実行すると「心身の状態チェック」タブが新設され、当月分の行が作られます。すでに当月分を記載済みの利用者がいる場合は、作成された行に合わせて「記載済」の✓を入れてください。</div>
       </div>
 
       <div class="note">

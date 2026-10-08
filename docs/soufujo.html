@@ -10,10 +10,10 @@
   :root{
     --paper:#FFFFFF;
     --ink:#3A332C;
-    --sub:#8a8070;
+    --sub:#6B6253;
     --gold:#D9A441;
     --leaf:#8FA37E;
-    --line:#E4DCC8;
+    --line:#B8AD93;
     --panelbg:#FFFFFF;
   }
   *{box-sizing:border-box;}
@@ -125,6 +125,18 @@
     .print-sheet:last-child{page-break-after:auto;}
     @page{size:A4; margin:0;}
   }
+
+  /* ---- 送付状：線・文字を濃くはっきり ---- */
+  @media print{
+    #printStack .sheet{ --line:#000; --sub:#000; color:#000; }
+    #printStack .greeting, #printStack .kishoo, #printStack .kishi{ color:#000; font-weight:500; }
+    #printStack .divider .rule, #printStack .footer-mark .rule{ border-top-width:1.2px; border-top-color:#000; }
+    #printStack table.patients th, #printStack table.patients td{ border-width:1.1px; border-color:#000; color:#000; }
+    #printStack .footer-tag{ color:#333; }
+    #addrBlock .zip, #addrBlock .addr, #addrBlock .org, #addrBlock .person{ color:#000; }
+    .sender-name{ color:#000; }
+    .sender-line{ color:#333; }
+  }
 </style>
 </head>
 <body>
@@ -169,8 +181,7 @@
     <div class="hint" style="margin-top:0;">選んだあとも、件名・あいさつ文はこの下で自由に書き換えられます。</div>
     <label style="margin-top:12px;">件名</label><input type="text" id="f_subject">
     <label>あいさつ文</label><textarea id="f_body" rows="6">拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからもよろしくお願いします。</textarea>
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。これからもよろしくお願いします。</textarea>
     <button type="button" class="small secondary" id="seasonalBtn" style="margin-top:6px;">🌺 今月の季節のひとことを追加</button>
     <div class="hint" style="margin-top:2px;">送る月に合わせた、ちょっとした季節の一文を書き出しの直後に挿入します（もう一度押すと外せます。読み込み済みの宛先すべてに反映されます）。</div>
 
@@ -252,8 +263,7 @@
 
 <script>
 const DEFAULT_GREETING = `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからもよろしくお願いします。`;
+このたび、ご利用者様の「訪問看護計画書」および「訪問看護報告書」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。これからもよろしくお願いします。`;
 
 // 送付状を使う3つの場面ごとの「件名」「あいさつ文」プリセット。
 // ボタン1つで、読み込み済みの宛先すべてにまとめて反映する。
@@ -262,8 +272,7 @@ const SCENARIO_PRESETS = {
     label: '提供票(実績)の送付',
     subject: '「サービス提供票（実績）」送付について',
     body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-今月分の「サービス提供票（実績）」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。
-これからもよろしくお願いします。`
+今月分の「サービス提供票（実績）」を、下記のとおりお送りいたします。お忙しい中恐れ入りますが、ご確認いただけますと幸いです。これからもよろしくお願いします。`
   },
   keikaku: {
     label: '計画書・報告書の送付',
@@ -274,8 +283,7 @@ const SCENARIO_PRESETS = {
     label: '指示書の依頼',
     subject: '「訪問看護指示書」交付のお願い',
     body: `拝啓　いつも温かいご支援とご連携をいただき、心より感謝申し上げます。
-このたび、下記のご利用者様について訪問看護を継続させていただくにあたり、「訪問看護指示書」の交付をお願いしたく、ご案内申し上げます。お忙しい中恐れ入りますが、ご手配いただけますと幸いです。
-これからもよろしくお願いします。`
+このたび、下記のご利用者様について訪問看護を継続させていただくにあたり、「訪問看護指示書」の交付をお願いしたく、ご案内申し上げます。お忙しい中恐れ入りますが、ご手配いただけますと幸いです。これからもよろしくお願いします。`
   }
 };
 
