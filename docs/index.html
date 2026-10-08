@@ -384,6 +384,39 @@
     table.formtbl td{padding:2px 8px;}
     table.formtbl input:focus, table.formtbl textarea:focus, .tpl-box:focus{background:transparent;}
   }
+
+  /* ---- 依頼書：線・文字を濃くはっきり ---- */
+  #template-sheet{ --line:#9A9284; }
+  @media print{
+    #template-sheet{ --line:#000; color:#000; font-weight:500; }
+    .tpl-input-inline, .tpl-mini{ border-bottom-width:1.2px; }
+    table.formtbl th, table.formtbl td, .tpl-box{ border-width:1.1px; }
+    .tpl-item-num, .tpl-title2, .tpl-jigyosho, .tpl-ki{ color:#000; }
+  }
+
+  /* ---- 指示書フォーマット（別紙様式16/17/17の2/18）印刷用 ---- */
+  #shijishoPrintStack{ display:none; }
+  .shiji-page{
+    display:none; width:210mm; min-height:297mm; margin:0 auto; background:#fff;
+    padding:14mm; box-sizing:border-box; font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    color:#000; font-size:11px; line-height:1.5;
+  }
+  .shiji-code{ font-size:10px; margin-bottom:2mm; }
+  .shiji-title{ text-align:center; font-size:17px; font-weight:800; letter-spacing:3px; margin-bottom:2mm; }
+  .shiji-title .sub{ font-size:14px; letter-spacing:2px; display:block; margin-top:1mm; }
+  .shiji-note-right{ text-align:right; font-size:10px; margin-bottom:3mm; }
+  .shiji-period{ text-align:right; font-size:11.5px; margin-bottom:1mm; }
+  table.shiji-table{ width:100%; border-collapse:collapse; font-size:10.5px; margin-top:3mm; }
+  table.shiji-table th, table.shiji-table td{ border:1pt solid #000; padding:4px 6px; vertical-align:top; font-weight:500; line-height:1.6; }
+  table.shiji-table th{ background:#F0EEE6; text-align:left; font-weight:700; }
+  .shiji-small{ font-size:9.5px; color:#333; }
+  .shiji-blank-row{ height:9mm; }
+  .shiji-foot{ margin-top:6mm; text-align:right; font-size:11.5px; line-height:2.1; }
+  .shiji-foot .label{ display:inline-block; width:92px; text-align:left; vertical-align:top; }
+  @media print{
+    #shijishoPrintStack{ display:block !important; }
+    .shiji-page{ display:block !important; page-break-before:always; }
+  }
 </style>
 </head>
 <body>
@@ -717,7 +750,7 @@
             </div>
           </div>
           <div class="tpl-field-line">診療科（該当する場合のみ）：<input type="text" id="f_dept" class="tpl-input-inline" style="width:200px;" placeholder="任意"></div>
-          <div class="tpl-field-line">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;"></div>
+          <div class="tpl-field-line">主治医名：<input type="text" id="f_doctor" class="tpl-input-inline" style="width:200px;">　先生</div>
 
           <div class="tpl-title2">
             訪問看護指示書依頼書　（
@@ -772,7 +805,6 @@
                 <input type="text" class="tpl-mini" style="width:40px;">年<input type="text" class="tpl-mini" style="width:26px;">月<input type="text" class="tpl-mini" style="width:26px;">日〜
                 <input type="text" class="tpl-mini" style="width:40px;">年<input type="text" class="tpl-mini" style="width:26px;">月<input type="text" class="tpl-mini" style="width:26px;">日まで）
               </label>
-              <label class="tpl-check-row"><input type="checkbox" id="chk_iryokansatsu">医療観察精神科訪問看護指示書（精神科）</label>
             </div>
           </div>
 
@@ -808,6 +840,8 @@
 
         </div>
       </div>
+
+      <div id="shijishoPrintStack"></div>
     </section>
 
     <!-- 12 突合管理表 -->
@@ -980,7 +1014,213 @@
   }, { rootMargin: '-40% 0px -50% 0px', threshold: 0 });
   sections.forEach(s => s && io.observe(s));
 
+  function escapeHtml(s){
+    return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // =========================================================
+  // 指示書フォーマット（別紙様式16・17・17の2・18）の印刷
+  // 「4. 指示書種別」でチェックした種類の、国の様式に沿った
+  // 用紙（主治医が記入する部分は空欄）を、依頼書に続けて印刷する。
+  // =========================================================
+  function gatherShijishoData(){
+    const eraEl = document.querySelector('input[name="era"]:checked');
+    const era = eraEl ? eraEl.value : '';
+    const by = document.getElementById('f_by').value.trim();
+    const bm = document.getElementById('f_bm').value.trim();
+    const bd = document.getElementById('f_bd').value.trim();
+    const ERA_LABEL = { T:'大正', S:'昭和', H:'平成', R:'令和' };
+    let birthText = '　　　　年　　月　　日', age = '　　';
+    if (era && by && bm && bd) {
+      birthText = `${ERA_LABEL[era] || ''}${by}年${bm}月${bd}日`;
+      const birthYear = (ERA_LETTER_BASE[era] || 0) + parseInt(by, 10) - 1;
+      const bDate = new Date(birthYear, parseInt(bm, 10) - 1, parseInt(bd, 10));
+      if (!isNaN(bDate)) {
+        const today = new Date();
+        let a = today.getFullYear() - bDate.getFullYear();
+        const beforeBirthday = (today.getMonth() < bDate.getMonth()) ||
+          (today.getMonth() === bDate.getMonth() && today.getDate() < bDate.getDate());
+        if (beforeBirthday) a -= 1;
+        age = String(a);
+      }
+    }
+    const periodText = (yId, mId, dId) => {
+      const yy = document.getElementById(yId).value.trim();
+      const mm = document.getElementById(mId).value.trim();
+      const dd = document.getElementById(dId).value.trim();
+      return (yy || mm || dd) ? `${yy || '　　'}年${mm || '　'}月${dd || '　'}日` : '　　年　　月　　日';
+    };
+    return {
+      name: escapeHtml(document.getElementById('f_name').value.trim()) || '　　　　　　　　　　　　　　',
+      birthText, age,
+      periodStart: periodText('f_period_sy', 'f_period_sm', 'f_period_sd'),
+      periodEnd: periodText('f_period_ey', 'f_period_em', 'f_period_ed'),
+      jigyosho: '訪問看護ステーション　デイジー読谷',
+    };
+  }
+
+  function buildForm16(d){ // 別紙様式16：訪問看護指示書／在宅患者訪問点滴注射指示書
+    return `<div class="shiji-page">
+      <div class="shiji-code">（別紙様式１６）</div>
+      <div class="shiji-title">訪　問　看　護　指　示　書<span class="sub">在宅患者訪問点滴注射指示書</span></div>
+      <div class="shiji-note-right">※該当する指示書を○で囲むこと</div>
+      <div class="shiji-period">訪問看護指示期間　（　${d.periodStart}　～　${d.periodEnd}　）</div>
+      <div class="shiji-period">点滴注射指示期間　（　　　　年　　月　　日　～　　　　年　　月　　日　）</div>
+      <table class="shiji-table">
+        <tr><th style="width:90px;">患者氏名</th><td>${d.name}</td><th style="width:70px;">生年月日</th><td style="width:170px;">${d.birthText}（　${d.age}　歳）</td></tr>
+        <tr><th>患者住所</th><td colspan="3">　　　　　　　　　　　　　　　　　　　　　　　電話（　　　）　　　－</td></tr>
+        <tr><th>主たる傷病名</th><td colspan="3">（１）　　　　　　　　　　（２）　　　　　　　　　　（３）</td></tr>
+        <tr><th>傷病名コード</th><td colspan="3" class="shiji-blank-row"></td></tr>
+        <tr><th rowspan="5">現在の状況<br><span class="shiji-small">（該当項目に<br>○等）</span></th><td colspan="3">病状・治療状態</td></tr>
+        <tr><td colspan="3" class="shiji-blank-row"></td></tr>
+        <tr><td colspan="3">投与中の薬剤の用量・用法　　１．　　　　　　２．　　　　　　３．　　　　　　４．　　　　　　５．　　　　　　６．</td></tr>
+        <tr><td colspan="3">日常生活自立度　　寝たきり度：Ｊ１　Ｊ２　Ａ１　Ａ２　Ｂ１　Ｂ２　Ｃ１　Ｃ２<br>　　　　　　　　　認知症の状況：Ⅰ　Ⅱａ　Ⅱｂ　Ⅲａ　Ⅲｂ　Ⅳ　Ｍ</td></tr>
+        <tr><td colspan="3">要介護認定の状況　　要支援（１　２）　　要介護（１　２　３　４　５）／　褥瘡の深さ　　D3　D4　D5　（NPUAP：Ⅲ度　Ⅳ度）</td></tr>
+        <tr><th>装着・使用<br>医療機器等</th><td colspan="3">
+          １．自動腹膜灌流装置　２．透析液供給装置　３．酸素療法（　ℓ／min）　４．吸引器　５．中心静脈栄養　６．輸液ポンプ<br>
+          ７．経管栄養（経鼻・胃瘻：サイズ　、　日に１回交換）　８．留置カテーテル（部位：　サイズ　、　日に１回交換）<br>
+          ９．人工呼吸器（陽圧式・陰圧式：設定　）　10．気管カニューレ（サイズ　）　11．人工肛門　12．人工膀胱　13．その他（　）
+        </td></tr>
+        <tr><th colspan="4">留意事項及び指示事項</th></tr>
+        <tr><td colspan="4">Ⅰ　療養生活指導上の留意事項</td></tr>
+        <tr><td colspan="4" class="shiji-blank-row"></td></tr>
+        <tr><td colspan="4">
+          Ⅱ　１．理学療法士・作業療法士・言語聴覚士が行う訪問看護　　１日あたり（　）分を週（　）回<br>
+          　　２．褥瘡の処置等　　３．装着・使用医療機器等の操作援助・管理　　４．その他
+        </td></tr>
+        <tr><td colspan="4" class="shiji-blank-row"></td></tr>
+        <tr><th colspan="4">在宅患者訪問点滴注射に関する指示（投与薬剤・投与量・投与方法等）</th></tr>
+        <tr><td colspan="4" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th style="width:120px;">緊急時の連絡先</th><td colspan="3" class="shiji-blank-row"></td></tr>
+        <tr><th>不在時の対応</th><td colspan="3" class="shiji-blank-row"></td></tr>
+        <tr><th>特記すべき<br>留意事項</th><td colspan="3"><span class="shiji-small">（注：薬の相互作用・副作用、薬物アレルギーの既往、定期巡回・随時対応型訪問介護看護及び複合型サービス利用時の留意事項等があれば）</span><div class="shiji-blank-row" style="height:8mm;"></div></td></tr>
+        <tr><th>他の訪問看護<br>ステーションへの指示</th><td colspan="3">（　無　・　有　：　指定訪問看護ステーション名　　　　　　　　　　　　）</td></tr>
+        <tr><th>たんの吸引等実施のための<br>訪問介護事業所への指示</th><td colspan="3">（　無　・　有　：　訪問介護事業所名　　　　　　　　　　　　）</td></tr>
+      </table>
+      <div class="shiji-foot">
+        上記のとおり、指示いたします。<br>　　　　年　　月　　日<br><br>
+        <span class="label">医療機関名</span>　　　　　　　　　　　　　<br>
+        <span class="label">住　　所</span>　　　　　　　　　　　　　<br>
+        <span class="label">電　　話</span>　　　　（ＦＡＸ．）<br>
+        <span class="label">医師署名（又は記名押印）</span>　　　　　　　　　　　　　<br><br>
+        ${d.jigyosho}　殿
+      </div>
+    </div>`;
+  }
+
+  function buildForm17(d){ // 別紙様式17：精神科訪問看護指示書
+    return `<div class="shiji-page">
+      <div class="shiji-code">（別紙様式１７）</div>
+      <div class="shiji-title">精神科訪問看護指示書</div>
+      <div class="shiji-period">指示期間　（　${d.periodStart}　～　${d.periodEnd}　）</div>
+      <table class="shiji-table">
+        <tr><th style="width:90px;">患者氏名</th><td>${d.name}</td><th style="width:70px;">生年月日</th><td style="width:140px;">${d.birthText}（　${d.age}　歳）</td><th style="width:60px;">施設名</th><td></td></tr>
+        <tr><th>患者住所</th><td colspan="5">　　　　　　　　　　　　　　　　　　　　　電話（　　　）　　　－</td></tr>
+        <tr><th>主たる傷病名</th><td colspan="5">（１）　　　　　　　　　　（２）　　　　　　　　　　（３）</td></tr>
+        <tr><th>傷病名コード</th><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><th rowspan="6">現在の状況<br><span class="shiji-small">（該当項目に<br>○等）</span></th><td colspan="5">病状・治療状況</td></tr>
+        <tr><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><td colspan="5">投与中の薬剤の用量・用法</td></tr>
+        <tr><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><td colspan="5">病名告知　　あり　・　なし　／　治療の受け入れ</td></tr>
+        <tr><td colspan="5">複数名訪問の必要性　　あり　・　なし　（理由：１．暴力行為等　２．身体的理由　３．家族支援　４．その他）<br>短時間訪問の必要性　　あり　・　なし　／　複数回訪問の必要性　　あり　・　なし<br>日常生活自立度　　認知症の状況：（　Ⅰ　Ⅱａ　Ⅱｂ　Ⅲａ　Ⅲｂ　Ⅳ　Ｍ　）</td></tr>
+        <tr><th colspan="6">精神訪問看護に関する留意事項及び指示事項<br><span class="shiji-small">１生活リズムの確立　２家事能力・社会技能等の獲得　３対人関係の改善（家族含む）　４社会資源活用の支援　５薬物療法継続への援助　６身体合併症の発症・悪化の防止　７その他</span></th></tr>
+        <tr><td colspan="6" class="shiji-blank-row" style="height:22mm;"></td></tr>
+        <tr><th style="width:120px;">緊急時の連絡先</th><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><th>不在時の対応法</th><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><th>主治医との<br>情報交換の手段</th><td colspan="5" class="shiji-blank-row"></td></tr>
+        <tr><th>特記すべき<br>留意事項</th><td colspan="5" class="shiji-blank-row"></td></tr>
+      </table>
+      <div class="shiji-foot">
+        上記のとおり、指定訪問看護の実施を指示いたします。<br>　　　　年　　月　　日<br><br>
+        <span class="label">医療機関名</span>　　　　　　　　　　　　　<br>
+        <span class="label">住　　所</span>　　　　　　　　　　　　　<br>
+        <span class="label">電　　話</span>　　　　（ＦＡＸ．）<br>
+        <span class="label">医師署名（又は記名押印）</span>　　　　　　　　　　　　　<br><br>
+        ${d.jigyosho}　殿
+      </div>
+    </div>`;
+  }
+
+  function buildForm17b(d){ // 別紙様式17の2：精神科特別訪問看護指示書／在宅患者訪問点滴注射指示書
+    return `<div class="shiji-page">
+      <div class="shiji-code">（別紙様式１７の２）</div>
+      <div class="shiji-title">精神科特別訪問看護指示書<span class="sub">在宅患者訪問点滴注射指示書</span></div>
+      <div class="shiji-note-right">※該当する指示書を○で囲むこと</div>
+      <div class="shiji-period">特別看護指示期間　（　${d.periodStart}　～　${d.periodEnd}　）</div>
+      <div class="shiji-period">点滴注射指示期間　（　　　　年　　月　　日　～　　　　年　　月　　日　）</div>
+      <table class="shiji-table">
+        <tr><th style="width:90px;">患者氏名</th><td>${d.name}</td><th style="width:70px;">生年月日</th><td style="width:170px;">${d.birthText}（　${d.age}　歳）</td></tr>
+        <tr><th>病状・主訴</th><td colspan="3" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th>一時的に訪問看護が<br>頻回に必要な理由</th><td colspan="3" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th colspan="4">留意事項及び指示事項<span class="shiji-small">（注：点滴注射薬の相互作用・副作用についての留意点があれば）</span></th></tr>
+        <tr><td colspan="4">
+          複数名訪問の必要性　あり・なし（理由：１．暴力行為等　２．身体的理由　３．家族支援　４．その他）<br>
+          短時間訪問の必要性　あり・なし（理由：　　　　　　　　　　　　　　　　　　　　　　　　　）
+        </td></tr>
+        <tr><th colspan="4">特に観察を要する項目<span class="shiji-small">（該当項目に○）：　１服薬確認　２水分及び食物摂取の状況　３精神症状　４身体症状　５その他</span></th></tr>
+        <tr><td colspan="4" class="shiji-blank-row"></td></tr>
+        <tr><th colspan="4">点滴注射指示内容（投与薬剤・投与量・投与方法等）</th></tr>
+        <tr><td colspan="4" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th style="width:120px;">緊急時の連絡先等</th><td colspan="3" class="shiji-blank-row"></td></tr>
+      </table>
+      <div class="shiji-foot">
+        上記のとおり、指示いたします。<br>　　　　年　　月　　日<br><br>
+        <span class="label">医療機関名</span>　　　　　　　　　　　　　<br>
+        <span class="label">電　　話</span>　　　　（ＦＡＸ．）<br>
+        <span class="label">医師署名（又は記名押印）</span>　　　　　　　　　　　　　<br><br>
+        ${d.jigyosho}　殿
+      </div>
+    </div>`;
+  }
+
+  function buildForm18(d){ // 別紙様式18：特別訪問看護指示書／在宅患者訪問点滴注射指示書
+    return `<div class="shiji-page">
+      <div class="shiji-code">（別紙様式１８）</div>
+      <div class="shiji-title">特　別　訪　問　看　護　指　示　書<span class="sub">在宅患者訪問点滴注射指示書</span></div>
+      <div class="shiji-note-right">※該当する指示書を○で囲むこと</div>
+      <div class="shiji-period">特別看護指示期間　（　${d.periodStart}　～　${d.periodEnd}　）</div>
+      <div class="shiji-period">点滴注射指示期間　（　　　　年　　月　　日　～　　　　年　　月　　日　）</div>
+      <table class="shiji-table">
+        <tr><th style="width:90px;">患者氏名</th><td>${d.name}</td><th style="width:70px;">生年月日</th><td style="width:170px;">${d.birthText}（　${d.age}　歳）</td></tr>
+        <tr><th>病状・主訴</th><td colspan="3" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th>一時的に訪問看護が<br>頻回に必要な理由</th><td colspan="3" class="shiji-blank-row" style="height:16mm;"></td></tr>
+        <tr><th colspan="4">留意事項及び指示事項<span class="shiji-small">（注：点滴注射薬の相互作用・副作用についての留意点があれば）</span></th></tr>
+        <tr><td colspan="4" class="shiji-blank-row" style="height:30mm;"></td></tr>
+        <tr><th colspan="4">点滴注射指示内容（投与薬剤・投与量・投与方法等）</th></tr>
+        <tr><td colspan="4" class="shiji-blank-row" style="height:22mm;"></td></tr>
+        <tr><th style="width:120px;">緊急時の連絡先等</th><td colspan="3" class="shiji-blank-row"></td></tr>
+      </table>
+      <div class="shiji-foot">
+        上記のとおり、指示いたします。<br>　　　　年　　月　　日<br><br>
+        <span class="label">医療機関名</span>　　　　　　　　　　　　　<br>
+        <span class="label">電　　話</span>　　　　（ＦＡＸ．）<br>
+        <span class="label">医師署名（又は記名押印）</span>　　　　　　　　　　　　　<br><br>
+        ${d.jigyosho}　殿
+      </div>
+    </div>`;
+  }
+
+  const SHIJI_BUILDERS = {
+    chk_ippan: buildForm16,
+    chk_seishin: buildForm17,
+    chk_toku_seishin: buildForm17b,
+    chk_toku_ippan: buildForm18,
+  };
+
+  function renderShijishoForms(){
+    const data = gatherShijishoData();
+    const container = document.getElementById('shijishoPrintStack');
+    let html = '';
+    Object.keys(SHIJI_BUILDERS).forEach(chkId => {
+      const chk = document.getElementById(chkId);
+      if (chk && chk.checked) html += SHIJI_BUILDERS[chkId](data);
+    });
+    container.innerHTML = html;
+  }
+
   function printTemplate(){
+    renderShijishoForms();
     window.print();
   }
 
@@ -1064,6 +1304,24 @@
     return null;
   }
 
+  // 略式の和暦表記（例：「(S23/2/29) 78歳」「S23/2/29」など、電子カルテの
+  // 「生年月日/年齢」列によくある書式）をDateに変換
+  const ERA_LETTER_BASE = { M:1868, T:1912, S:1926, H:1989, R:2019 };
+  function parseAbbrevEraDate(str){
+    if (!str) return null;
+    const s = str.toString().trim();
+    const m = s.match(/([MTSHR])\s*(\d{1,3})\s*[\/\.]\s*(\d{1,2})\s*[\/\.]\s*(\d{1,2})/i);
+    if (!m) return null;
+    const base = ERA_LETTER_BASE[m[1].toUpperCase()];
+    if (!base) return null;
+    const eraYear = parseInt(m[2], 10);
+    const month = parseInt(m[3], 10);
+    const day = parseInt(m[4], 10);
+    if (!eraYear || !month || !day) return null;
+    const d = new Date(base + eraYear - 1, month - 1, day);
+    return isNaN(d) ? null : d;
+  }
+
   function excelSerialToDate(v){
     if (v instanceof Date) return v;
     if (typeof v === 'number') {
@@ -1071,7 +1329,7 @@
       return new Date(Math.round((v - 25569) * 86400 * 1000));
     }
     if (typeof v === 'string' && v.trim() !== '') {
-      const eraDate = parseJapaneseEraDate(v);
+      const eraDate = parseJapaneseEraDate(v) || parseAbbrevEraDate(v);
       if (eraDate) return eraDate;
       const d = new Date(v);
       if (!isNaN(d)) return d;
@@ -1101,7 +1359,12 @@
       const header = rows[headerRowIdx];
       const col = {
         name:  findColumn(header, { exact: ['利用者名', '利用者氏名'] }),
-        kana:  findColumn(header, { exact: ['利用者ふりがな', 'フリガナ'], include: ['利用者', 'ふりがな'] }),
+        kana:  (() => {
+          const byExact = findColumn(header, { exact: ['利用者ふりがな', 'フリガナ', 'ふりがな'] });
+          if (byExact !== -1) return byExact;
+          // 「ふりがな」単独の列名（病院名・主治医名の「ふりがな」列は除外）
+          return findColumn(header, { include: ['ふりがな'], exclude: ['病院', '医療機関', '主治医', '医師', '指示書'] });
+        })(),
         birth: findColumn(header, { include: ['生年月日'] }),
         kind:  (() => {
           const byType = findColumn(header, { include: ['指示書種類'] });
