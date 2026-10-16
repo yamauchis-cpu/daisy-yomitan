@@ -306,6 +306,7 @@
     font-family:inherit;font-size:13.5px;resize:vertical;background:#fff;color:var(--ink);
   }
   .tpl-box:focus, .tpl-select:focus{outline:none;background:#FCEFD3;}
+  .tpl-print-mirror{display:none;white-space:pre-wrap;word-break:break-word;min-height:auto;}
   .tpl-radio-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:13.5px;font-weight:700;}
   .tpl-radio-row label{display:flex;align-items:center;gap:6px;font-weight:400;background:#FCFAF3;border:1px solid var(--line);padding:6px 12px;border-radius:999px;}
   .tpl-radio-row label input{accent-color:var(--sage);}
@@ -365,8 +366,8 @@
     section#template{margin-bottom:0;}
     #template .card, .tpl-wrap{box-shadow:none;border:none;}
     .tpl-toolbar{display:none;}
-    #template-sheet{padding:2mm 3mm;box-sizing:border-box;}
-    .tpl-header2{margin-bottom:6px;}
+    #template-sheet{padding:7mm 8mm 4mm;box-sizing:border-box;}
+    .tpl-header2{margin-bottom:7px;}
     .tpl-hospital-line, .tpl-issuedate{font-size:11px;}
     .tpl-field-line{font-size:10.5px;margin:3px 0;}
     .tpl-title2{font-size:16px;margin:10px 0 2px;}
@@ -379,6 +380,9 @@
     .tpl-check-row{font-size:10px;}
     .tpl-example{font-size:9px;margin:2px 0 3px;}
     .tpl-box{font-size:10.5px;padding:5px 8px;min-height:26px;}
+    #content_preset_wrap{display:none !important;}
+    #f_content{display:none !important;}
+    .tpl-print-mirror{display:block !important;}
     table.formtbl{font-size:10.5px;margin-top:4px;}
     table.formtbl th{padding:3px 8px;width:90px;}
     table.formtbl td{padding:2px 8px;}
@@ -810,13 +814,14 @@
 
           <div class="tpl-item">
             <span class="tpl-item-num">5.</span> 訪問看護内容
-            <div style="margin:6px 0;">
+            <div style="margin:6px 0;" id="content_preset_wrap">
               <select id="content_preset" class="tpl-select">
                 <option value="">－ 例文を選択（自動でテキスト欄に反映されます） －</option>
               </select>
             </div>
             <div class="tpl-example">例）病状観察、訪問看護1日あたり30分を週1回など</div>
             <textarea id="f_content" rows="3" class="tpl-box"></textarea>
+            <div id="f_content_print" class="tpl-box tpl-print-mirror" aria-hidden="true"></div>
           </div>
 
           <div class="tpl-item">
@@ -1253,6 +1258,9 @@
 
   function printTemplate(){
     renderShijishoForms();
+    const contentBox = document.getElementById('f_content');
+    const contentMirror = document.getElementById('f_content_print');
+    if (contentBox && contentMirror) contentMirror.textContent = contentBox.value;
     window.print();
   }
 
