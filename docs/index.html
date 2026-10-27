@@ -495,7 +495,7 @@
         依頼書テンプレートはこのページ内でそのまま入力・印刷できます。
       </p>
       <div class="hero-stats">
-        <div class="hero-stat"><b>1〜2ヶ月前</b>継続依頼の目安タイミング</div>
+        <div class="hero-stat"><b>期限の3週間前</b>継続の依頼書を送る時期</div>
         <div class="hero-stat"><b>最長6ヶ月</b>指示書の有効期間</div>
         <div class="hero-stat"><b>5年間</b>記録の保存期間（運営規程第15条）</div>
       </div>
@@ -551,7 +551,7 @@
         <div class="timing-card cont">
           <span class="tag">継続</span>
           <h4>現行の指示期間が満了する場合</h4>
-          <p>有効期限の <strong>1〜2ヶ月前</strong> を目安に動き始めます。</p>
+          <p>有効期限の <strong>3週間前</strong> に依頼書を送ります。訪問診療のみの医療機関（訪問診療所・在宅クリニック）には送りません。</p>
         </div>
         <div class="timing-card change">
           <span class="tag">変更・再交付</span>
@@ -587,7 +587,7 @@
           </div>
           <div class="flow-step">
             <div class="flow-num">4</div>
-            <div class="flow-body"><h4>送付</h4><p>返信用封筒（切手貼付・宛名記載）を同封し、医療機関へ郵送、または連絡のうえFAX送付します。</p></div>
+            <div class="flow-body"><h4>送付</h4><p>返信用封筒（切手貼付・宛名記載）を同封し、医療機関へ郵送、または連絡のうえFAX送付します。訪問診療のみの医療機関には送りません（07章）。</p></div>
           </div>
           <div class="flow-step">
             <div class="flow-num">5</div>
@@ -618,7 +618,7 @@
           <li>利用者情報：氏名・生年月日・住所・連絡先</li>
           <li>傷病名・現在の病状の概要</li>
           <li>依頼内容：訪問看護の目的、必要な医療処置（該当する場合）</li>
-          <li>希望する訪問頻度・リハビリ職の関与有無</li>
+          <li>希望する訪問頻度</li>
           <li>指示期間の開始希望日（継続の場合は必須）</li>
           <li>緊急性がある場合はその理由と希望回答期限</li>
           <li>依頼元情報：事業所名・担当者名・電話／FAX／メールアドレス</li>
@@ -644,6 +644,7 @@
       <div class="block-head"><span class="block-num">07</span><h2>送付方法</h2></div>
       <div class="card">
         <ul class="plain">
+          <li><strong>送り先の確認：</strong>依頼書を郵送するのは病院・外来クリニックです。<strong>訪問診療のみの医療機関（訪問診療所・在宅クリニック）には郵送しません</strong>。迷ったら管理者に確認します。</li>
           <li>原則として郵送とし、返信用封筒（切手貼付・当ステーション宛名記載）を必ず同封します。</li>
           <li>急を要する場合は、事前に医療機関へ電話連絡のうえFAX送付も検討します（原本は別途郵送）。</li>
           <li>依頼書は利用者1名につき1枚です。</li>
@@ -662,7 +663,6 @@
           <tr><td><input type="checkbox"></td><td>利用者氏名・生年月日・住所に誤りがないか</td></tr>
           <tr><td><input type="checkbox"></td><td>主たる傷病名が記載され、医療保険／介護保険の適用区分と整合しているか</td></tr>
           <tr><td><input type="checkbox"></td><td>指示期間（開始日〜終了日、最長6ヶ月）が依頼内容と一致しているか</td></tr>
-          <tr><td><input type="checkbox"></td><td>リハビリ（PT・OT・ST）が必要な場合、職種・時間・頻度が記載されているか</td></tr>
           <tr><td><input type="checkbox"></td><td>特別管理加算対象の場合、褥瘡の深さ等の該当記載があるか</td></tr>
           <tr><td><input type="checkbox"></td><td>留意事項・緊急時の対応・不在時の対応が記載されているか</td></tr>
           <tr><td><input type="checkbox"></td><td>医療機関名・住所・TEL・FAX・医師名の記載および署名又は捺印があるか</td></tr>
@@ -876,7 +876,7 @@
         </div>
         <div class="note" style="margin-top:18px;">
           <svg class="daisy" style="color:var(--warn-line)"><use href="#daisy-icon" xlink:href="#daisy-icon"/></svg>
-          <div>クリックすると新しいタブでGoogleドライブ（スプレッドシート）が開きます。共有設定が「リンクを知っている全員が閲覧可（またはステーション内の編集可）」になっていることをご確認ください。開いた画面からダウンロード（ファイル→ダウンロード→Excel形式）も可能です。</div>
+          <div>クリックすると新しいタブでGoogleドライブ（スプレッドシート）が開きます。利用者名が入った台帳のため、共有は<strong>事業所内のアカウントだけ</strong>にしています（「リンクを知っている全員」には設定しません）。開けないときは管理者に共有を依頼してください。開いた画面からダウンロード（ファイル→ダウンロード→Excel形式）も可能です。</div>
         </div>
       </div>
 
@@ -961,10 +961,10 @@
         </table>
       </div>
 
-      <div class="note" style="margin-bottom:16px;">
-        <svg class="daisy" style="color:var(--warn-line)"><use href="#daisy-icon" xlink:href="#daisy-icon"/></svg>
-        <div>（反映時の参考）Apps Scriptのコード（事務チェック_v3.gs）を入れ替えて保存し、「setup」を実行すると「心身の状態チェック」タブが新設され、当月分の行が作られます。すでに当月分を記載済みの利用者がいる場合は、作成された行に合わせて「記載済」の✓を入れてください。</div>
-      </div>
+      <details style="margin-bottom:16px;border:1px dashed var(--warn-line);border-radius:10px;padding:10px 14px;">
+        <summary style="cursor:pointer;font-weight:700;">管理者向け：スプレッドシートの仕組みを更新するとき（事務の方は読まなくて大丈夫です）</summary>
+        <p style="margin:8px 0 0;">Apps Scriptのコード（事務チェック_v3.gs）を入れ替えて保存し、「setup」を実行すると「心身の状態チェック」タブが新設され、当月分の行が作られます。すでに当月分を記載済みの利用者がいる場合は、作成された行に合わせて「記載済」の✓を入れてください。</p>
+      </details>
 
       <div class="note">
         <svg class="daisy" style="color:var(--warn-line)"><use href="#daisy-icon" xlink:href="#daisy-icon"/></svg>
